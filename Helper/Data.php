@@ -2,11 +2,16 @@
 
 namespace DamConsultants\Akima\Helper;
 
-use Magento\Framework\App\Helper\AbstractHelper;
+use \Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Store\Model\ScopeInterface;
 
 class Data extends AbstractHelper
 {
+    /**
+     * @var $storeScope
+     */
+    protected $storeScope;
+
     /**
      * @var \Magento\Framework\Filesystem
      */
@@ -18,68 +23,60 @@ class Data extends AbstractHelper
     protected $_scopeConfig;
 
     /**
-     * @var string
+     * @var $by_redirecturl
      */
     public $by_redirecturl;
 
     /**
-     * @var string
+     * @var $bynderDomain
      */
     public $bynderDomain = "";
 
     /**
-     * @var string
+     * @var $permanent_token
      */
     public $permanent_token = "";
-
     /**
-     * @var \Magento\Framework\Stdlib\Cookie\CookieMetadataFactory
+     * @var $permanent_token
      */
     protected $cookieMetadataFactory;
-
     /**
-     * @var \Magento\Framework\Stdlib\CookieManagerInterface
+     * @var $permanent_token
      */
     protected $cookieManager;
-
     /**
-     * @var \Magento\Catalog\Api\ProductRepositoryInterface
+     * @var $permanent_token
      */
     protected $productrepository;
-
     /**
-     * @var \Magento\Store\Model\StoreManagerInterface
+     * @var $permanent_token
      */
     protected $_storeManager;
-
     /**
-     * @var \Magento\Framework\HTTP\Client\Curl
+     * @var $permanent_token
      */
     protected $_curl;
-
     /**
-     * @var \Magento\ConfigurableProduct\Block\Adminhtml\Product\Steps\Bulk
+     * @var $permanent_token
      */
     protected $_bulk;
-
     /**
-     * @var \Magento\Framework\Registry
+     * @var $permanent_token
      */
     protected $_registry;
 
-    public const BYNDER_DOMAIN      = 'bynderconfig/bynder_credential/bynderdomain';
-    public const PERMANENT_TOKEN    = 'bynderconfig/bynder_credential/permanent_token';
-    public const LICENCE_TOKEN      = 'bynderconfig/bynder_credential/licenses_key';
-    public const RADIO_BUTTON       = 'byndeimageconfig/bynder_image/selectimage';
-    public const PRODUCT_SKU_LIMIT  = 'cronimageconfig/set_limit_product_sku/product_sku_limt';
-    public const FETCH_CRON         = 'cronimageconfig/configurable_cron/fetch_enable';
-    public const AUTO_CRON          = 'cronimageconfig/auto_add_bynder/auto_enable';
-    public const API_CALLED         = 'https://developer.thedamconsultants.com/';
-    public const DELETE_CRON        = 'cronimageconfig/delete_cron_bynder/delete_enable';
+    public const BYNDER_DOMAIN = 'bynderconfig/bynder_credential/bynderdomain';
+    public const PERMANENT_TOKEN = 'bynderconfig/bynder_credential/permanent_token';
+    public const LICENCE_TOKEN = 'bynderconfig/bynder_credential/licenses_key';
+    public const RADIO_BUTTON = 'byndeimageconfig/bynder_image/selectimage';
+    public const PRODUCT_SKU_LIMIT = 'cronimageconfig/set_limit_product_sku/product_sku_limt';
+    public const FETCH_CRON = 'cronimageconfig/configurable_cron/fetch_enable';
+    public const AUTO_CRON = 'cronimageconfig/auto_add_bynder/auto_enable';
+    public const API_CALLED = 'https://developer.thedamconsultants.com/';
+    public const DELETE_CRON = 'cronimageconfig/delete_cron_bynder/delete_enable';
 
     /**
-     * Data Helper constructor.
-     *
+     * Data Helper
      * @param \Magento\Framework\Stdlib\Cookie\CookieMetadataFactory $cookieMetadataFactory
      * @param \Magento\Framework\Stdlib\CookieManagerInterface $cookieManager
      * @param \Magento\Framework\App\Helper\Context $context
@@ -104,231 +101,178 @@ class Data extends AbstractHelper
         \Magento\ConfigurableProduct\Block\Adminhtml\Product\Steps\Bulk $bulk
     ) {
         $this->cookieMetadataFactory = $cookieMetadataFactory;
-        $this->cookieManager         = $cookieManager;
-        $this->productrepository     = $productrepository;
-        $this->filesystem            = $filesystem;
-        $this->_scopeConfig          = $context->getScopeConfig();
-        $this->_storeManager         = $storeManager;
-        $this->_curl                 = $curl;
-        $this->_bulk                 = $bulk;
-        $this->_registry             = $registry;
+        $this->cookieManager = $cookieManager;
+        $this->productrepository = $productrepository;
+        $this->filesystem = $filesystem;
+        $this->_scopeConfig = $context->getScopeConfig();
+        $this->_storeManager = $storeManager;
+        $this->_curl = $curl;
+        $this->_bulk = $bulk;
+        $this->_registry = $registry;
         parent::__construct($context);
     }
-
-    // -------------------------------------------------------------------------
-    // Internal helper
-    // -------------------------------------------------------------------------
-
     /**
-     * Execute a JSON POST request against the DAM Consultants API and return the body.
+     * Get Bulk Image Roll
      *
-     * Centralises the repetitive cURL setup that was previously copy-pasted into
-     * every public API method.
-     *
-     * @param string $endpoint  Path segment after self::API_CALLED
-     * @param array  $fields    Associative array of POST fields
-     * @return string           Raw response body
-     */
-    private function makeApiPost(string $endpoint, array $fields): string
-    {
-        $url     = self::API_CALLED . $endpoint;
-        $payload = json_encode($fields);
-
-        $this->_curl->setOption(CURLOPT_URL, $url);
-        $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
-        $this->_curl->setOption(CURLOPT_TIMEOUT, 0);
-        $this->_curl->setOption(CURLOPT_ENCODING, '');
-        $this->_curl->setOption(CURLOPT_MAXREDIRS, 10);
-        $this->_curl->setOption(CURLOPT_FOLLOWLOCATION, true);
-        $this->_curl->setOption(CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-        $this->_curl->setOption(CURLOPT_POSTFIELDS, $payload);
-        $this->_curl->addHeader('Content-Type', 'application/json');
-        $this->_curl->post($url, $payload);
-
-        return (string) $this->_curl->getBody();
-    }
-
-    // -------------------------------------------------------------------------
-    // Credential / config helpers
-    // -------------------------------------------------------------------------
-
-    /**
-     * Return the media attributes for bulk configurable product steps.
-     *
-     * @return mixed
+     * @return $this
      */
     public function getBulkImageRoll()
     {
         return $this->_bulk->getMediaAttributes();
     }
-
     /**
-     * Return the registered product object for the given registry key.
+     * Get Image Roll
      *
+     * @return $this
      * @param string $currentProduct
-     * @return mixed
      */
     public function getProduct($currentProduct)
     {
         return $this->_registry->registry($currentProduct);
     }
-
     /**
-     * Load and return a product by its ID via the product repository.
+     * Get Product Id
      *
-     * @param int $productId
-     * @return \Magento\Catalog\Api\Data\ProductInterface
+     * @return $this
+     * @param string $productId
      */
     public function getProductById($productId)
     {
+
         return $this->productrepository->getById($productId);
     }
-
     /**
-     * Return whether the Bynder fetch cron is enabled.
+     * Get Fetch cron enable
      *
-     * @return mixed
+     * @return $this
      */
     public function getFetchCronEnable()
     {
         return $this->getConfig(self::FETCH_CRON);
     }
-
     /**
-     * Return the store configuration value at the given path.
+     * Get Permanent Token
      *
      * @param string $path
-     * @return string
+     * @return $this
      */
     public function getDeleteCron($path)
     {
         return (string) $this->getStoreConfig($path);
     }
-
     /**
-     * Return whether the Bynder delete cron is enabled.
+     * Get Auto cron enable
      *
-     * @return mixed
+     * @return $this
      */
     public function getDeleteCronEnable()
     {
         return $this->getConfig(self::DELETE_CRON);
     }
-
     /**
-     * Return whether the Bynder auto-add cron is enabled.
+     * Get Auto cron enable
      *
-     * @return mixed
+     * @return $this
      */
     public function getAutoCronEnable()
     {
         return $this->getConfig(self::AUTO_CRON);
     }
-
     /**
-     * Return a scoped store configuration value.
+     * Get Store Config
      *
-     * @param string   $storePath
-     * @param int|null $storeId
-     * @return mixed
+     * @return $this
+     * @param string $storePath
+     * @param string $storeId
      */
     public function getStoreConfig($storePath, $storeId = null)
     {
         return $this->_scopeConfig->getValue($storePath, ScopeInterface::SCOPE_STORE, $storeId);
     }
-
     /**
-     * Return the configured Bynder domain.
+     * Get Bynder Domain
      *
-     * @return string
+     * @return $this
      */
     public function getBynderDomain()
     {
         return (string) $this->getStoreConfig(self::BYNDER_DOMAIN);
     }
-
     /**
-     * Return the configured permanent token.
+     * Get Permanent Token
      *
-     * @return string
+     * @return $this
      */
     public function getPermanentToken()
     {
         return (string) $this->getStoreConfig(self::PERMANENT_TOKEN);
     }
-
     /**
-     * Return the configured licence token.
+     * Get Licence Token
      *
-     * @return string
+     * @return $this
      */
     public function getLicenceToken()
     {
         return (string) $this->getStoreConfig(self::LICENCE_TOKEN);
     }
-
     /**
-     * Return the configured Bynder image selection radio value.
+     * Bynde Image Config
      *
-     * @return string
+     * @return $this
      */
     public function byndeimageconfig()
     {
         return (string) $this->getStoreConfig(self::RADIO_BUTTON);
     }
-
     /**
-     * Return the configured product SKU cron limit.
+     * Get Product Sku Limit Config
      *
-     * @return string
+     * @return $this
      */
     public function getProductSkuLimitConfig()
     {
         return (string) $this->getStoreConfig(self::PRODUCT_SKU_LIMIT);
     }
-
     /**
-     * Return the Bynder domain via scope config (alias used by cron/observer classes).
+     * Get Bynder Dom
      *
-     * @return string
+     * @return $this
      */
     public function getBynderDom()
     {
         return (string) $this->getConfig(self::BYNDER_DOMAIN);
     }
-
     /**
-     * Return the permanent token via scope config (alias used by cron/observer classes).
+     * Get Permanen Token
      *
-     * @return string
+     * @return $this
      */
     public function getPermanenToken()
     {
         return (string) $this->getConfig(self::PERMANENT_TOKEN);
     }
-
     /**
-     * Load and validate the Bynder credentials into public properties.
+     * Get Load Credential
      *
-     * @return int|string  1 on success; error message string on failure
+     * @return $this
      */
     public function getLoadCredential()
     {
-        $this->bynderDomain    = $this->getBynderDom();
-        $this->permanent_token = $this->getPermanenToken();
-        $this->by_redirecturl  = $this->getRedirecturl();
 
+        $this->bynderDomain = $this->getBynderDom();
+        $this->permanent_token = $this->getPermanenToken();
+        $this->by_redirecturl = $this->getRedirecturl();
         if (!empty($this->bynderDomain) && !empty($this->permanent_token) && !empty($this->by_redirecturl)) {
             return 1;
+        } else {
+            return "Bynder authentication failed | Please check your credential";
         }
-
-        return "Bynder authentication failed | Please check your credential";
     }
-
     /**
-     * Return the Bynder redirect URL constructed from the store base URL.
+     * Get Redirecturl
      *
-     * @return string
+     * @return $this
      */
     public function getRedirecturl()
     {
@@ -336,340 +280,612 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Return the current store base URL.
+     * Get baseurl
      *
-     * @return string
+     * @return $this
      */
     public function getbaseurl()
     {
-        return $this->_storeManager->getStore()->getBaseUrl();
+        $url = $this->_storeManager->getStore()->getBaseUrl();
+        return $url;
     }
-
     /**
-     * Return a store-scoped config value by path.
+     * Get Config
      *
+     * @return $this
      * @param string $path
-     * @return mixed
      */
     public function getConfig($path)
     {
         return $this->_scopeConfig->getValue($path, \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
     }
-
-    // -------------------------------------------------------------------------
-    // API call methods — all delegate to makeApiPost()
-    // -------------------------------------------------------------------------
-
     /**
-     * Check the Bynder licence status against the DAM Consultants API.
+     * Get CheckBynder
      *
-     * @return string Raw API response body
+     * @return $this
      */
     public function getCheckBynder()
     {
-        return $this->makeApiPost('macfarlane-check-bynder-license', [
-            'base_url'      => $this->getbaseurl(),
+        $fields = [
+            'base_url' => $this->getbaseurl(),
             'licence_token' => $this->getLicenceToken()
-        ]);
-    }
+        ];
+        $jsonData = '{}';
+        $fields = json_encode($fields);
 
+        $this->_curl->setOption(CURLOPT_URL, self::API_CALLED . 'akima-check-bynder-license');
+        $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
+        $this->_curl->setOption(CURLOPT_TIMEOUT, 0);
+        $this->_curl->setOption(CURLOPT_ENCODING, '');
+        $this->_curl->setOption(CURLOPT_MAXREDIRS, 10);
+        $this->_curl->setOption(CURLOPT_FOLLOWLOCATION, true);
+        $this->_curl->setOption(CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        $this->_curl->setOption(CURLOPT_POSTFIELDS, $fields);
+
+        $this->_curl->addHeader("Content-Type", "application/json");
+
+        $this->_curl->post(self::API_CALLED . 'akima-check-bynder-license', $jsonData);
+
+        $response = $this->_curl->getBody();
+        return $response;
+    }
     /**
-     * Fetch derivatives / thumbnails for the given Bynder media IDs.
+     * Get DerivativesImage
      *
+     * @return $this
      * @param array $bynder_auth
-     * @return string Raw API response body
      */
     public function getDerivativesImage($bynder_auth)
     {
-        return $this->makeApiPost('macfarlane-magento-derivatives', [
-            'bynder_domain'                => $bynder_auth['bynderDomain'],
-            'redirectUri'                  => $bynder_auth['redirectUri'],
-            'permanent_token'              => $bynder_auth['token'],
-            'databaseId'                   => $bynder_auth['og_media_ids'],
-            'daatasetType'                 => $bynder_auth['dataset_types'],
-            'base_url'                     => $this->getbaseurl(),
-            'licence_token'                => $this->getLicenceToken(),
-            'bynder_metaproperty_collection' => $bynder_auth['collection_data_value']
-        ]);
-    }
 
+        $fields = [
+            'bynder_domain' => $bynder_auth['bynderDomain'],
+            'redirectUri' => $bynder_auth['redirectUri'],
+            'permanent_token' => $bynder_auth['token'],
+            'databaseId' => $bynder_auth['og_media_ids'],
+            'daatasetType' => $bynder_auth['dataset_types'],
+            'base_url' => $this->getbaseurl(),
+            'licence_token' => $this->getLicenceToken(),
+            'bynder_metaproperty_collection' => $bynder_auth['collection_data_value']
+        ];
+        $jsonData = '{}';
+        $fields = json_encode($fields);
+
+        $this->_curl->setOption(CURLOPT_URL, self::API_CALLED . 'akima-magento-derivatives');
+        $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
+        $this->_curl->setOption(CURLOPT_TIMEOUT, 0);
+        $this->_curl->setOption(CURLOPT_ENCODING, '');
+        $this->_curl->setOption(CURLOPT_MAXREDIRS, 10);
+        $this->_curl->setOption(CURLOPT_FOLLOWLOCATION, true);
+        $this->_curl->setOption(CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        $this->_curl->setOption(CURLOPT_POSTFIELDS, $fields);
+
+        $this->_curl->addHeader("Content-Type", "application/json");
+
+        $this->_curl->post(self::API_CALLED . 'akima-magento-derivatives', $jsonData);
+
+        $response = $this->_curl->getBody();
+
+        return $response;
+    }
     /**
-     * Retrieve the licence key for the current store's domain.
+     * Get LicenceKey
      *
-     * @return string Raw API response body
+     * @return $this
      */
     public function getLicenceKey()
     {
-        return $this->makeApiPost('macfarlane-get-license-key', [
+        $fields = [
             'domain_name' => $this->getbaseurl()
-        ]);
-    }
+        ];
+        $jsonData = '{}';
+        $fields = json_encode($fields);
 
+        $this->_curl->setOption(CURLOPT_URL, self::API_CALLED . 'akima-get-license-key');
+        $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
+        $this->_curl->setOption(CURLOPT_TIMEOUT, 0);
+        $this->_curl->setOption(CURLOPT_ENCODING, '');
+        $this->_curl->setOption(CURLOPT_MAXREDIRS, 10);
+        $this->_curl->setOption(CURLOPT_FOLLOWLOCATION, true);
+        $this->_curl->setOption(CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        $this->_curl->setOption(CURLOPT_POSTFIELDS, $fields);
+
+        $this->_curl->addHeader("Content-Type", "application/json");
+
+        $this->_curl->post(self::API_CALLED . 'akima-get-license-key', $jsonData);
+
+        $response = $this->_curl->getBody();
+        return $response;
+    }
     /**
-     * Notify the DAM Consultants API of changed image metadata for a product URL.
+     * Get BynderChangemetadataAssets
      *
+     * @return $this
      * @param string $product_url
      * @param string $url_data
-     * @return string Raw API response body
      */
     public function getBynderChangemetadataAssets($product_url, $url_data)
     {
-        return $this->makeApiPost('macfarlane-change-metadata-magento', [
-            'domain_name'      => $this->getbaseurl(),
-            'bynder_domain'    => $this->getBynderDom(),
-            'permanent_token'  => $this->getPermanenToken(),
-            'licence_token'    => $this->getLicenceToken(),
-            'product_url'      => $product_url,
-            'bynder_multi_img' => $url_data
-        ]);
-    }
 
+        $fields = [
+            'domain_name' => $this->getbaseurl(),
+            'bynder_domain' => $this->getBynderDom(),
+            'permanent_token' => $this->getPermanenToken(),
+            'licence_token' => $this->getLicenceToken(),
+            'product_url' => $product_url,
+            'bynder_multi_img' => $url_data
+        ];
+        $jsonData = '{}';
+        $fields = json_encode($fields);
+
+        $this->_curl->setOption(CURLOPT_URL, self::API_CALLED . 'akima-change-metadata-magento');
+        $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
+        $this->_curl->setOption(CURLOPT_TIMEOUT, 0);
+        $this->_curl->setOption(CURLOPT_ENCODING, '');
+        $this->_curl->setOption(CURLOPT_MAXREDIRS, 10);
+        $this->_curl->setOption(CURLOPT_FOLLOWLOCATION, true);
+        $this->_curl->setOption(CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        $this->_curl->setOption(CURLOPT_POSTFIELDS, $fields);
+
+        $this->_curl->addHeader("Content-Type", "application/json");
+
+        $this->_curl->post(self::API_CALLED . 'akima-change-metadata-magento', $jsonData);
+
+        $response = $this->_curl->getBody();
+        return $response;
+    }
     /**
-     * Notify the DAM Consultants API of changed document metadata for a product URL.
+     * Get BynderChangemetadataAssetsDoc
      *
+     * @return $this
      * @param string $product_url
      * @param string $url_data
-     * @return string Raw API response body
      */
     public function getBynderChangemetadataAssetsDoc($product_url, $url_data)
     {
-        return $this->makeApiPost('macfarlane-change-metadata-magento-doc', [
-            'domain_name'      => $this->getbaseurl(),
-            'bynder_domain'    => $this->getBynderDom(),
-            'permanent_token'  => $this->getPermanenToken(),
-            'licence_token'    => $this->getLicenceToken(),
-            'product_url'      => $product_url,
-            'bynder_multi_img' => $url_data
-        ]);
-    }
 
+        $fields = [
+            'domain_name' => $this->getbaseurl(),
+            'bynder_domain' => $this->getBynderDom(),
+            'permanent_token' => $this->getPermanenToken(),
+            'licence_token' => $this->getLicenceToken(),
+            'product_url' => $product_url,
+            'bynder_multi_img' => $url_data
+        ];
+        $jsonData = '{}';
+        $fields = json_encode($fields);
+
+        $this->_curl->setOption(CURLOPT_URL, self::API_CALLED . 'akima-change-metadata-magento-doc');
+        $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
+        $this->_curl->setOption(CURLOPT_TIMEOUT, 0);
+        $this->_curl->setOption(CURLOPT_ENCODING, '');
+        $this->_curl->setOption(CURLOPT_MAXREDIRS, 10);
+        $this->_curl->setOption(CURLOPT_FOLLOWLOCATION, true);
+        $this->_curl->setOption(CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        $this->_curl->setOption(CURLOPT_POSTFIELDS, $fields);
+
+        $this->_curl->addHeader("Content-Type", "application/json");
+
+        $this->_curl->post(self::API_CALLED . 'akima-change-metadata-magento-doc', $jsonData);
+
+        $response = $this->_curl->getBody();
+        return $response;
+    }
     /**
-     * Notify the DAM Consultants API of changed video metadata for a product URL.
+     * Get BynderChangemetadataAssetsVideo
      *
+     * @return $this
      * @param string $product_url
      * @param string $url_data
-     * @return string Raw API response body
      */
     public function getBynderChangemetadataAssetsVideo($product_url, $url_data)
     {
-        return $this->makeApiPost('macfarlane-change-metadata-magento-video', [
-            'domain_name'      => $this->getbaseurl(),
-            'bynder_domain'    => $this->getBynderDom(),
-            'permanent_token'  => $this->getPermanenToken(),
-            'licence_token'    => $this->getLicenceToken(),
-            'product_url'      => $product_url,
-            'bynder_multi_img' => $url_data
-        ]);
-    }
 
+        $fields = [
+            'domain_name' => $this->getbaseurl(),
+            'bynder_domain' => $this->getBynderDom(),
+            'permanent_token' => $this->getPermanenToken(),
+            'licence_token' => $this->getLicenceToken(),
+            'product_url' => $product_url,
+            'bynder_multi_img' => $url_data
+        ];
+        $jsonData = '{}';
+        $fields = json_encode($fields);
+
+        $this->_curl->setOption(CURLOPT_URL, self::API_CALLED . 'akima-change-metadata-magento-video');
+        $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
+        $this->_curl->setOption(CURLOPT_TIMEOUT, 0);
+        $this->_curl->setOption(CURLOPT_ENCODING, '');
+        $this->_curl->setOption(CURLOPT_MAXREDIRS, 10);
+        $this->_curl->setOption(CURLOPT_FOLLOWLOCATION, true);
+        $this->_curl->setOption(CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        $this->_curl->setOption(CURLOPT_POSTFIELDS, $fields);
+
+        $this->_curl->addHeader("Content-Type", "application/json");
+
+        $this->_curl->post(self::API_CALLED . 'akima-change-metadata-magento-video', $jsonData);
+
+        $response = $this->_curl->getBody();
+        return $response;
+    }
     /**
-     * Notify the DAM Consultants API of changed metadata for a CMS page URL.
+     * Get BynderDataCmsPage
      *
+     * @return $this
      * @param string $CMSPageURL
      * @param string $url_data
-     * @return string Raw API response body
      */
     public function getBynderDataCmsPage($CMSPageURL, $url_data)
     {
-        return $this->makeApiPost('macfarlane-change-metadata-magento-cms-page', [
-            'domain_name'      => $this->getbaseurl(),
-            'bynder_domain'    => $this->getBynderDom(),
-            'permanent_token'  => $this->getPermanenToken(),
-            'licence_token'    => $this->getLicenceToken(),
-            'cmspage_url'      => $CMSPageURL,
-            'bynder_multi_img' => $url_data
-        ]);
-    }
 
+        $fields = [
+            'domain_name' => $this->getbaseurl(),
+            'bynder_domain' => $this->getBynderDom(),
+            'permanent_token' => $this->getPermanenToken(),
+            'licence_token' => $this->getLicenceToken(),
+            'cmspage_url' => $CMSPageURL,
+            'bynder_multi_img' => $url_data
+        ];
+        $jsonData = '{}';
+        $fields = json_encode($fields);
+
+        $this->_curl->setOption(CURLOPT_URL, self::API_CALLED . 'akima-change-metadata-magento-cms-page');
+        $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
+        $this->_curl->setOption(CURLOPT_TIMEOUT, 0);
+        $this->_curl->setOption(CURLOPT_ENCODING, '');
+        $this->_curl->setOption(CURLOPT_MAXREDIRS, 10);
+        $this->_curl->setOption(CURLOPT_FOLLOWLOCATION, true);
+        $this->_curl->setOption(CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        $this->_curl->setOption(CURLOPT_POSTFIELDS, $fields);
+
+        $this->_curl->addHeader("Content-Type", "application/json");
+
+        $this->_curl->post(self::API_CALLED . 'akima-change-metadata-magento-cms-page', $jsonData);
+
+        $response = $this->_curl->getBody();
+        return $response;
+    }
     /**
-     * Fetch the list of Bynder meta-properties available for the configured domain.
+     * Get BynderMetaProperites
      *
-     * @return string Raw API response body
+     * @return $this
      */
     public function getBynderMetaProperites()
     {
-        return $this->makeApiPost('macfarlane-get-bynder-meta-properites', [
-            'domain_name'     => $this->getbaseurl(),
-            'bynder_domain'   => $this->getBynderDom(),
+        $fields = [
+            'domain_name' => $this->getbaseurl(),
+            'bynder_domain' => $this->getBynderDom(),
             'permanent_token' => $this->getPermanenToken(),
-            'licence_token'   => $this->getLicenceToken()
-        ]);
-    }
+            'licence_token' => $this->getLicenceToken()
+        ];
+        $jsonData = '{}';
+        $fields = json_encode($fields);
+        $this->_curl->setOption(CURLOPT_URL, self::API_CALLED . 'akima-get-bynder-meta-properites');
+        $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
+        $this->_curl->setOption(CURLOPT_TIMEOUT, 0);
+        $this->_curl->setOption(CURLOPT_ENCODING, '');
+        $this->_curl->setOption(CURLOPT_MAXREDIRS, 10);
+        $this->_curl->setOption(CURLOPT_FOLLOWLOCATION, true);
+        $this->_curl->setOption(CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        $this->_curl->setOption(CURLOPT_POSTFIELDS, $fields);
 
+        $this->_curl->addHeader("Content-Type", "application/json");
+
+        $this->_curl->post(self::API_CALLED . 'akima-get-bynder-meta-properites', $jsonData);
+
+        $response = $this->_curl->getBody();
+        return $response;
+    }
     /**
-     * Fetch Bynder image/media sync data for a given SKU.
+     * Get ImageSyncWithProperties
      *
+     * @return $this
      * @param string $sku_id
-     * @param string|null $property_id
-     * @param array  $collection_data_value
-     * @return string Raw API response body
+     * @param string $property_id
+     * @param string $collection_data_value
      */
     public function getImageSyncWithProperties($sku_id, $property_id, $collection_data_value)
     {
-        return $this->makeApiPost('macfarlane-bynder-skudetails-new', [
-            'domain_name'                    => $this->getbaseurl(),
-            'bynder_domain'                  => $this->getBynderDom(),
-            'permanent_token'                => $this->getPermanenToken(),
-            'licence_token'                  => $this->getLicenceToken(),
-            'sku_id'                         => $sku_id,
-            'property_id'                    => $property_id,
+        $fields = [
+            'domain_name' => $this->getbaseurl(),
+            'bynder_domain' => $this->getBynderDom(),
+            'permanent_token' => $this->getPermanenToken(),
+            'licence_token' => $this->getLicenceToken(),
+            'sku_id' => $sku_id,
+            'property_id' => $property_id,
             'bynder_metaproperty_collection' => $collection_data_value
-        ]);
-    }
+        ];
 
+        $jsonData = '{}';
+        $fields = json_encode($fields);
+        $this->_curl->setOption(CURLOPT_URL, self::API_CALLED . 'akima-bynder-skudetails-new');
+        $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
+        $this->_curl->setOption(CURLOPT_TIMEOUT, 0);
+        $this->_curl->setOption(CURLOPT_ENCODING, '');
+        $this->_curl->setOption(CURLOPT_MAXREDIRS, 10);
+        $this->_curl->setOption(CURLOPT_FOLLOWLOCATION, true);
+        $this->_curl->setOption(CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        $this->_curl->setOption(CURLOPT_POSTFIELDS, $fields);
+
+        $this->_curl->addHeader("Content-Type", "application/json");
+
+        $this->_curl->post(self::API_CALLED . 'akima-bynder-skudetails-new', $jsonData);
+
+        $response = $this->_curl->getBody();
+        /*
+        echo "<pre>";
+        print_r(json_decode($response));
+        exit;
+        */
+        return $response;
+    }
     /**
-     * Request removal of a Bynder asset from the Magento data set.
+     * Get DataRemoveForMagento
      *
+     * @return $this
      * @param string $sku_id
      * @param string $media_Id
      * @param string $metaProperty_id
-     * @return string Raw API response body
      */
     public function getDataRemoveForMagento($sku_id, $media_Id, $metaProperty_id)
     {
-        return $this->makeApiPost('macfarlane-sku-data-remove-for-magento', [
-            'domain_name'     => $this->getbaseurl(),
-            'bynder_domain'   => $this->getBynderDom(),
+        $fields = [
+            'domain_name' => $this->getbaseurl(),
+            'bynder_domain' => $this->getBynderDom(),
             'permanent_token' => $this->getPermanenToken(),
-            'licence_token'   => $this->getLicenceToken(),
-            'sku_id'          => $sku_id,
-            'media_id'        => $media_Id,
-            'property_id'     => $metaProperty_id
-        ]);
-    }
+            'licence_token' => $this->getLicenceToken(),
+            'sku_id' => $sku_id,
+            'media_id' => $media_Id,
+            'property_id' => $metaProperty_id
+        ];
+        $jsonData = '{}';
+        $fields = json_encode($fields);
 
+        $this->_curl->setOption(CURLOPT_URL, self::API_CALLED . 'akima-sku-data-remove-for-magento');
+        $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
+        $this->_curl->setOption(CURLOPT_TIMEOUT, 0);
+        $this->_curl->setOption(CURLOPT_ENCODING, '');
+        $this->_curl->setOption(CURLOPT_MAXREDIRS, 10);
+        $this->_curl->setOption(CURLOPT_FOLLOWLOCATION, true);
+        $this->_curl->setOption(CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        $this->_curl->setOption(CURLOPT_POSTFIELDS, $fields);
+
+        $this->_curl->addHeader("Content-Type", "application/json");
+
+        $this->_curl->post(self::API_CALLED . 'akima-sku-data-remove-for-magento', $jsonData);
+
+        $response = $this->_curl->getBody();
+        return $response;
+    }
     /**
-     * Fetch compact-view SKU additions from Bynder.
+     * Get DataRemoveForMagento
      *
+     * @return $this
      * @param string $sku_id
      * @param string $media_Id
      * @param string $metaProperty_id
-     * @return string Raw API response body
      */
     public function getAddedCompactviewSkuFromBynder($sku_id, $media_Id, $metaProperty_id)
     {
-        return $this->makeApiPost('macfarlane-added-compactview-sku-from-bynder', [
-            'domain_name'     => $this->getbaseurl(),
-            'bynder_domain'   => $this->getBynderDom(),
+        $fields = [
+            'domain_name' => $this->getbaseurl(),
+            'bynder_domain' => $this->getBynderDom(),
             'permanent_token' => $this->getPermanenToken(),
-            'licence_token'   => $this->getLicenceToken(),
-            'sku_id'          => $sku_id,
-            'media_id'        => $media_Id,
-            'property_id'     => $metaProperty_id
-        ]);
+            'licence_token' => $this->getLicenceToken(),
+            'sku_id' => $sku_id,
+            'media_id' => $media_Id,
+            'property_id' => $metaProperty_id
+        ];
+        $jsonData = '{}';
+        $fields = json_encode($fields);
+
+        $this->_curl->setOption(CURLOPT_URL, self::API_CALLED . 'akima-added-compactview-sku-from-bynder');
+        $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
+        $this->_curl->setOption(CURLOPT_TIMEOUT, 0);
+        $this->_curl->setOption(CURLOPT_ENCODING, '');
+        $this->_curl->setOption(CURLOPT_MAXREDIRS, 10);
+        $this->_curl->setOption(CURLOPT_FOLLOWLOCATION, true);
+        $this->_curl->setOption(CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        $this->_curl->setOption(CURLOPT_POSTFIELDS, $fields);
+
+        $this->_curl->addHeader("Content-Type", "application/json");
+
+        $this->_curl->post(self::API_CALLED . 'akima-added-compactview-sku-from-bynder', $jsonData);
+
+        $response = $this->_curl->getBody();
+        return $response;
     }
 
     /**
-     * Push updated image role and alt-text data to Bynder.
+     * Get DataRemoveForMagento
      *
+     * @return $this
      * @param string $product_sku_key
-     * @param array  $metaProperty_Collections
-     * @param array  $image
-     * @return string Raw API response body
+     * @param string $metaProperty_Collections
+     * @param string $image
      */
     public function getUpdateBynderImageRoleAndAltText($product_sku_key, $metaProperty_Collections, $image)
     {
-        return $this->makeApiPost('macfarlane-update-bynderImageRole-and-altText', [
-            'domain_name'            => $this->getbaseurl(),
-            'bynder_domain'          => $this->getBynderDom(),
-            'permanent_token'        => $this->getPermanenToken(),
-            'licence_token'          => $this->getLicenceToken(),
-            'sku_id'                 => $product_sku_key,
+        $fields = [
+            'domain_name' => $this->getbaseurl(),
+            'bynder_domain' => $this->getBynderDom(),
+            'permanent_token' => $this->getPermanenToken(),
+            'licence_token' => $this->getLicenceToken(),
+            'sku_id' => $product_sku_key,
             'metaProperty_Collections' => $metaProperty_Collections,
             'bynder_changes_details' => $image
-        ]);
-    }
+        ];
+        $jsonData = '{}';
+        $fields = json_encode($fields);
 
+        $this->_curl->setOption(CURLOPT_URL, self::API_CALLED . 'akima-update-bynderImageRole-and-altText');
+        $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
+        $this->_curl->setOption(CURLOPT_TIMEOUT, 0);
+        $this->_curl->setOption(CURLOPT_ENCODING, '');
+        $this->_curl->setOption(CURLOPT_MAXREDIRS, 10);
+        $this->_curl->setOption(CURLOPT_FOLLOWLOCATION, true);
+        $this->_curl->setOption(CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        $this->_curl->setOption(CURLOPT_POSTFIELDS, $fields);
+
+        $this->_curl->addHeader("Content-Type", "application/json");
+
+        $this->_curl->post(self::API_CALLED . 'akima-update-bynderImageRole-and-altText', $jsonData);
+
+        $response = $this->_curl->getBody();
+        return $response;
+    }
     /**
-     * Sync the full asset details for a product to the DAM.
+     * Change Bynder Assets Details
      *
      * @param array $bynder_auth
-     * @return string Raw API response body
+     * @return $this
      */
     public function changeBynderAssetsDetails($bynder_auth)
     {
-        return $this->makeApiPost('macfarlane-sync-assets-details', [
-            'domain_name'                    => $this->getbaseurl(),
-            'bynder_domain'                  => $bynder_auth['bynderDomain'],
-            'permanent_token'                => $bynder_auth['token'],
-            'new_value_obj'                  => $bynder_auth['new_value_obj'],
-            'base_url'                       => $this->getbaseurl(),
-            'licence_token'                  => $this->getLicenceToken(),
+        $fields = [
+            'domain_name' => $this->getbaseurl(),
+            'bynder_domain' => $bynder_auth['bynderDomain'],
+            'permanent_token' => $bynder_auth['token'],
+            'new_value_obj' => $bynder_auth['new_value_obj'],
+            'base_url' => $this->getbaseurl(),
+            'licence_token' => $this->getLicenceToken(),
             'bynder_metaproperty_collection' => $bynder_auth['collection_data_value']
-        ]);
-    }
+        ];
+        $jsonData = '{}';
+        $fields = json_encode($fields);
+        $this->_curl->setOption(CURLOPT_URL, self::API_CALLED . 'akima-sync-assets-details');
+        $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
+        $this->_curl->setOption(CURLOPT_TIMEOUT, 0);
+        $this->_curl->setOption(CURLOPT_ENCODING, '');
+        $this->_curl->setOption(CURLOPT_MAXREDIRS, 10);
+        $this->_curl->setOption(CURLOPT_FOLLOWLOCATION, true);
+        $this->_curl->setOption(CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        $this->_curl->setOption(CURLOPT_POSTFIELDS, $fields);
 
+        $this->_curl->addHeader("Content-Type", "application/json");
+
+        $this->_curl->post(self::API_CALLED . 'akima-sync-assets-details', $jsonData);
+
+        $response = $this->_curl->getBody();
+        return $response;
+    }
     /**
-     * Sync asset details via the popup (compact view) endpoint.
+     * Change Popup Bynder Assets Details
      *
      * @param array $bynder_auth
-     * @return string Raw API response body
+     * @return $this
      */
     public function changePopupBynderAssetsDetails($bynder_auth)
     {
-        $baseUrl = $this->getbaseurl();
-        return $this->makeApiPost('sync-macfarlane-popup-assets-details', [
-            'domain_name'                    => $baseUrl,
-            'bynder_domain'                  => $bynder_auth['bynderDomain'],
-            'permanent_token'                => $bynder_auth['token'],
-            'new_value_obj'                  => $bynder_auth['new_value_obj'],
-            'base_url'                       => $baseUrl,
-            'licence_token'                  => $this->getLicenceToken(),
+        $getBaseUrl = $this->getbaseurl();
+        $fields = [
+            'domain_name' => $getBaseUrl,
+            'bynder_domain' => $bynder_auth['bynderDomain'],
+            'permanent_token' => $bynder_auth['token'],
+            'new_value_obj' => $bynder_auth['new_value_obj'],
+            'base_url' => $getBaseUrl,
+            'licence_token' => $this->getLicenceToken(),
             'bynder_metaproperty_collection' => $bynder_auth['collection_data_value']
-        ]);
-    }
+        ];
+        $jsonData = '{}';
+        $fields = json_encode($fields);
+        $this->_curl->setOption(CURLOPT_URL, self::API_CALLED . 'sync-akima-popup-assets-details');
+        $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
+        $this->_curl->setOption(CURLOPT_TIMEOUT, 0);
+        $this->_curl->setOption(CURLOPT_ENCODING, '');
+        $this->_curl->setOption(CURLOPT_MAXREDIRS, 10);
+        $this->_curl->setOption(CURLOPT_FOLLOWLOCATION, true);
+        $this->_curl->setOption(CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        $this->_curl->setOption(CURLOPT_POSTFIELDS, $fields);
 
+        $this->_curl->addHeader("Content-Type", "application/json");
+
+        $this->_curl->post(self::API_CALLED . 'sync-akima-popup-assets-details', $jsonData);
+
+        $response = $this->_curl->getBody();
+       
+        return $response;
+    }
     /**
-     * Remove a SKU or role association in the DAM.
+     * Remove Role DAM
      *
      * @param array $bynder_auth
-     * @return string Raw API response body
+     * @return $this
      */
     public function removeSkuOrRoleDAM($bynder_auth)
     {
-        $baseUrl = $this->getbaseurl();
-        return $this->makeApiPost('macfarlane-remove-sku-role-from-dam', [
-            'domain_name'                    => $baseUrl,
-            'bynder_domain'                  => $bynder_auth['bynderDomain'],
-            'permanent_token'                => $bynder_auth['token'],
-            'new_value_obj'                  => $bynder_auth['changes_details'],
-            'base_url'                       => $baseUrl,
-            'licence_token'                  => $this->getLicenceToken(),
+        $getBaseUrl = $this->getbaseurl();
+        $fields = [
+            'domain_name' => $getBaseUrl,
+            'bynder_domain' => $bynder_auth['bynderDomain'],
+            'permanent_token' => $bynder_auth['token'],
+            'new_value_obj' => $bynder_auth['changes_details'],
+            'base_url' => $getBaseUrl,
+            'licence_token' => $this->getLicenceToken(),
             'bynder_metaproperty_collection' => $bynder_auth['collection_data_value']
-        ]);
-    }
+        ];
+        $jsonData = '{}';
+        $fields = json_encode($fields);
+        $this->_curl->setOption(CURLOPT_URL, self::API_CALLED . 'akima-remove-sku-role-from-dam');
+        $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
+        $this->_curl->setOption(CURLOPT_TIMEOUT, 0);
+        $this->_curl->setOption(CURLOPT_ENCODING, '');
+        $this->_curl->setOption(CURLOPT_MAXREDIRS, 10);
+        $this->_curl->setOption(CURLOPT_FOLLOWLOCATION, true);
+        $this->_curl->setOption(CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        $this->_curl->setOption(CURLOPT_POSTFIELDS, $fields);
 
+        $this->_curl->addHeader("Content-Type", "application/json");
+
+        $this->_curl->post(self::API_CALLED . 'akima-remove-sku-role-from-dam', $jsonData);
+
+        $response = $this->_curl->getBody();
+        return $response;
+    }
     /**
-     * Fetch assets deleted from the DAM since the last cron run.
+     * CheckBynderSideDeleteData
      *
-     * @param array $bynder_auth  Must contain key 'last_cron_time'
-     * @return string Raw API response body
+     * @param array $bynder_auth
      */
     public function getCheckBynderSideDeleteData($bynder_auth)
     {
-        $baseUrl = $this->getbaseurl();
-        return $this->makeApiPost('macfarlane-remove-assets-deleted-data-from-dam', [
-            'domain_name'     => $baseUrl,
-            'bynder_domain'   => $this->getBynderDom(),
+        $getBaseUrl = $this->getbaseurl();
+        $fields = [
+            'domain_name' => $this->getbaseurl(),
+            'bynder_domain' => $this->getBynderDom(),
             'permanent_token' => $this->getPermanenToken(),
-            'licence_token'   => $this->getLicenceToken(),
-            'base_url'        => $baseUrl,
-            'last_cron_time'  => $bynder_auth['last_cron_time']
-        ]);
+            'licence_token' => $this->getLicenceToken(),
+            'base_url' => $getBaseUrl,
+            'last_cron_time' => $bynder_auth['last_cron_time']
+        ];
+        $jsonData = '{}';
+        $fields = json_encode($fields);
+        $this->_curl->setOption(CURLOPT_URL, self::API_CALLED . 'akima-remove-assets-deleted-data-from-dam');
+        $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
+        $this->_curl->setOption(CURLOPT_TIMEOUT, 0);
+        $this->_curl->setOption(CURLOPT_ENCODING, '');
+        $this->_curl->setOption(CURLOPT_MAXREDIRS, 10);
+        $this->_curl->setOption(CURLOPT_FOLLOWLOCATION, true);
+        $this->_curl->setOption(CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        $this->_curl->setOption(CURLOPT_POSTFIELDS, $fields);
+
+        $this->_curl->addHeader("Content-Type", "application/json");
+
+        $this->_curl->post(self::API_CALLED . 'akima-remove-assets-deleted-data-from-dam', $jsonData);
+
+        $response = $this->_curl->getBody();
+        return $response;
+        /*$response = '{"status":1,"data":[{"id":"48DADC72-8775-4CCC-81764EC55395E178"},{"id":"D49C3C3C-8091-4CA0-8D27C36BA14B15D7"}]}';
+        return $response;*/
     }
 
-    /**
-     * Sanitize a raw product SKU for use as a Bynder search term.
-     *
-     * Converts UTF-8 to ISO-8859-1, then replaces every character
-     * that is not alphanumeric or a hyphen with an underscore.
-     *
+     /**
+     * replaceto special string
      * @param string $og_sku
-     * @return string
+     * @return string $new_string
      */
-    public function replacetoSpecialString($og_sku)
-    {
-        $utf_og_sku = iconv('UTF-8', 'ISO-8859-1', $og_sku);
+    public function replacetoSpecialString($og_sku) {
+        $utf_og_sku = iconv('UTF-8', 'ISO-8859-1', $og_sku); 
         $new_string = preg_replace('/[^a-zA-Z0-9-]/', '_', $utf_og_sku);
         return $new_string;
     }

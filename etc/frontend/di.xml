@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+<preference for="Magento\Catalog\Block\Product\View\Gallery" type="DamConsultants\Akima\Block\Product\View\Gallery" />
+<preference for="Magento\Catalog\Block\Product\ImageFactory" type="DamConsultants\Akima\Block\Product\ImageFactory" />
+<preference for="Magento\Checkout\Model\Cart\ImageProvider" type="DamConsultants\Akima\Model\ImageProvider"/>
+<preference for="Hyva\Theme\ViewModel\Customer\ReviewList" type="DamConsultants\Akima\ViewModel\Customer\ReviewList" />
+    <type name="Magento\Checkout\CustomerData\AbstractItem">
+        <plugin name="Change_Product_Image_In_Minicart" type="DamConsultants\Akima\Plugin\Minicart\Image" sortOrder="1"/>
+    </type>
+</config>

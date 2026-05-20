@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceBlock name="product.info.media.image">
+            <action method="setTemplate">
+                <argument name="template" xsi:type="string">DamConsultants_Akima::product/view/gallery.phtml</argument>
+            </action>
+        </referenceBlock>
+		<referenceBlock name="product.media">
+			<action method="setTemplate">
+				<argument name="template" xsi:type="string">
+					DamConsultants_Akima::product/view/galleryhyva.phtml
+				</argument>
+			</action>
+		</referenceBlock>
+       <referenceBlock name="product.info.details">
+           <block class="Magento\Catalog\Block\Product\View" name="custom.tab" template="DamConsultants_Akima::product/view/bynderdoc_tab.phtml" group="detailed_info" >
+               <arguments>
+                   <argument translate="true" name="title" xsi:type="string">Document</argument>
+               </arguments>
+           </block>
+       </referenceBlock>
+    </body>
+</page>

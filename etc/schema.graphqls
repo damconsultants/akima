@@ -1,0 +1,3 @@
+extend type ProductInterface {
+    bynder_multi_img: String @resolver(class: "DamConsultants\\Akima\\Model\\Resolver\\BynderMultiImg")
+}

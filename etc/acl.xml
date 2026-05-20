@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Acl/etc/acl.xsd">
+   <acl>
+     <resources>
+        <resource id="Magento_Backend::admin">
+            <resource id="Magento_Backend::stores">
+                <resource id="Magento_Backend::stores_settings">
+                    <resource id="Magento_Config::config">
+                        <resource id="DamConsultants_Akima::config" title="Akima Credential" sortOrder="192012" />
+                        <resource id="DamConsultants_Akima::sync" title="Akima Manual sync" sortOrder="192013" />
+                        <resource id="DamConsultants_Akima::cron" title="Akima Cron" sortOrder="192014" />
+                    </resource>
+                </resource>
+            </resource>
+            <resource id="DamConsultants_Akima::menu" title="Akima Menu">
+                <resource id="DamConsultants_Akima::menu_item5" title="Akima Submenu">
+                    <resource id="DamConsultants_Akima::menu_item1" title="Akima Meta Property" sortOrder="192005" />
+                </resource>
+				<resource id="DamConsultants_Akima::menu_item6" title="Akima Cron Log">
+                    <resource id="DamConsultants_Akima::menu_item" title="Akima Cron Action Log" sortOrder="192006">
+						<resource id="DamConsultants_Akima::resync" title="Akima ReSync Link" sortOrder="192007"/>
+						<resource id="DamConsultants_Akima::cron_delete" title="Akima Delete Link" sortOrder="192007"/>
+						<resource id="DamConsultants_Akima::mass_resync" title="Akima Mass Re-Sync Data" sortOrder="192007"/>
+						<resource id="DamConsultants_Akima::cron_massdelete" title="Akima Mass Delete Data" sortOrder="192007"/>
+					</resource>
+					<resource id="DamConsultants_Akima::menu_item3" title="Akima Replace Cron Action Log" sortOrder="192009">
+						<resource id="DamConsultants_Akima::autocron_delete" title="Akima Replace Cron Delete Link" sortOrder="192009"/>
+						<resource id="DamConsultants_Akima::autocron_massdelete" title="Akima Replace Cron Mass Delete Link" sortOrder="192009"/>
+					</resource>
+					<resource id="DamConsultants_Akima::menu_item4" title="Akima Delete Cron Action Log" sortOrder="192010">
+						<resource id="DamConsultants_Akima::deletecron_delete" title="Akima Delete Cron Delete Link" sortOrder="192010"/>
+						<resource id="DamConsultants_Akima::cron_mass_delete" title="Akima Delete Cron Mass Delete Link" sortOrder="192010"/>
+					</resource>
+                </resource>
+				<resource id="DamConsultants_Akima::menu_item7" title="Akima Manual sync Log">
+                    <resource id="DamConsultants_Akima::menu_item2" title="Akima Synchronization Log" sortOrder="192011">
+						<resource id="DamConsultants_Akima::sync_delete" title="Akima Manual Sync Delete Link" sortOrder="192011"/>
+						<resource id="DamConsultants_Akima::massdelete" title="Akima Manual Sync Mass Delete Link" sortOrder="192011"/>
+					</resource>
+                </resource>
+				<resource id="DamConsultants_Akima::menu_item8" title="Akima Configuration Settings">
+                    <resource id="DamConsultants_Akima::settings" title="Akima Configuration Settings" sortOrder="192012" />
+                </resource>
+            </resource>
+        </resource>
+     </resources>
+   </acl>
+</config>

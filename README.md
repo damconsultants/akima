@@ -11,4 +11,4 @@ Magento 2 Akima Extension gives you a great opportunity to upload more “images
     1.4.3. php bin/magento setup:static-content:deploy
     
 2) Using Composer
-      composer require damconsultants/akima:1.0.0
+      composer require damconsultants/akima:1.0.1
